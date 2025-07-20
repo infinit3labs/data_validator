@@ -222,3 +222,7 @@ class DuckDBValidationEngine(ValidationEngine):
         except Exception:
             # If filtering fails, return original table
             return table_name
+    
+    def get_dataframe(self, table_name: str) -> pd.DataFrame:
+        """Get DataFrame from table name."""
+        return self._connection.execute(f"SELECT * FROM {table_name}").df()

@@ -122,6 +122,11 @@ class DataValidator:
                 if rule.enabled:
                     filtered_data = eng.apply_filter(filtered_data, rule)
             
+            # For DuckDB engine, convert back to DataFrame
+            if self.config.engine.type == "duckdb" and isinstance(filtered_data, str):
+                # Get the DataFrame from the table
+                filtered_data = eng.get_dataframe(filtered_data)
+            
             return filtered_data
     
     def validate_with_dlt(self, 

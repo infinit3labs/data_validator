@@ -1,0 +1,41 @@
+# DuckDB-specific configuration example
+version: "1.0"
+
+metadata:
+  description: "DuckDB data validation configuration"
+  use_case: "Local data analysis and validation"
+
+engine:
+  type: "duckdb"
+  connection_params:
+    database: ":memory:"  # Use in-memory database
+  options:
+    threads: "4"
+    memory_limit: "2GB"
+
+dqx:
+  enabled: false  # DQX might not be available in all DuckDB environments
+
+tables:
+  - name: "sales_data"
+    description: "Sales transaction validation"
+    rules:
+      - name: "transaction_id_unique"
+        rule_type: "uniqueness"
+        column: "transaction_id"
+        severity: "error"
+      
+      - name: "amount_positive"
+        rule_type: "range"
+        column: "amount"
+        parameters:
+          min_value: 0.01
+          max_value: 1000000
+        threshold: 0.99
+        severity: "error"
+      
+      - name: "customer_name_completeness"
+        rule_type: "completeness"
+        column: "customer_name"
+        threshold: 0.95
+        severity: "warning"

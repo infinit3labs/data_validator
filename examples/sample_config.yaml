@@ -1,0 +1,101 @@
+# Example data validation configuration
+version: "1.0"
+
+metadata:
+  description: "Sample data quality validation configuration"
+  author: "Data Engineering Team"
+  created: "2024-01-15"
+
+# Engine configuration
+engine:
+  type: "pyspark"  # Options: pyspark, duckdb, polars
+  connection_params:
+    spark.sql.adaptive.enabled: "true"
+    spark.sql.adaptive.coalescePartitions.enabled: "true"
+  options:
+    spark.sql.execution.arrow.pyspark.enabled: "true"
+
+# DQX integration settings
+dqx:
+  enabled: true
+  output_path: "/tmp/dqx_results"
+  metrics_table: "data_quality.validation_metrics"
+  quarantine_table: "data_quality.quarantined_records"
+
+# Global rules applied to all tables
+global_rules:
+  - name: "row_count_check"
+    description: "Ensure tables have at least 1 row"
+    rule_type: "custom"
+    expression: "SELECT COUNT(*) FROM {table} HAVING COUNT(*) = 0"
+    severity: "error"
+    enabled: true
+
+# Table-specific configurations
+tables:
+  - name: "customers"
+    description: "Customer master data validation"
+    rules:
+      - name: "customer_id_completeness"
+        description: "Customer ID should not be null"
+        rule_type: "completeness"
+        column: "customer_id"
+        threshold: 1.0
+        severity: "error"
+        enabled: true
+      
+      - name: "customer_id_uniqueness"
+        description: "Customer ID should be unique"
+        rule_type: "uniqueness"
+        column: "customer_id"
+        severity: "error"
+        enabled: true
+      
+      - name: "email_pattern"
+        description: "Email should follow valid pattern"
+        rule_type: "pattern"
+        column: "email"
+        parameters:
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        threshold: 0.95
+        severity: "warning"
+        enabled: true
+      
+      - name: "age_range"
+        description: "Customer age should be between 18 and 120"
+        rule_type: "range"
+        column: "age"
+        parameters:
+          min_value: 18
+          max_value: 120
+        threshold: 0.98
+        severity: "warning"
+        enabled: true
+
+  - name: "orders"
+    description: "Order data validation"
+    rules:
+      - name: "order_id_completeness"
+        description: "Order ID should not be null"
+        rule_type: "completeness"
+        column: "order_id"
+        threshold: 1.0
+        severity: "error"
+        enabled: true
+      
+      - name: "order_amount_positive"
+        description: "Order amount should be positive"
+        rule_type: "custom"
+        column: "order_amount"
+        expression: "SELECT COUNT(*) FROM {table} WHERE order_amount <= 0"
+        threshold: 0.99
+        severity: "error"
+        enabled: true
+      
+      - name: "order_date_range"
+        description: "Order date should be within last 5 years"
+        rule_type: "custom"
+        expression: "SELECT COUNT(*) FROM {table} WHERE order_date < DATE_SUB(CURRENT_DATE(), INTERVAL 5 YEAR)"
+        threshold: 0.95
+        severity: "warning"
+        enabled: true

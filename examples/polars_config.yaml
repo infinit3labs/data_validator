@@ -1,0 +1,41 @@
+# Polars-specific configuration example
+version: "1.0"
+
+metadata:
+  description: "Polars data validation configuration"
+  use_case: "Fast local data processing"
+
+engine:
+  type: "polars"
+  connection_params: {}
+  options:
+    streaming: true
+
+dqx:
+  enabled: false
+
+tables:
+  - name: "user_data"
+    description: "User profile validation"
+    rules:
+      - name: "user_id_completeness"
+        rule_type: "completeness"
+        column: "user_id"
+        severity: "error"
+      
+      - name: "score_range"
+        rule_type: "range"
+        column: "score"
+        parameters:
+          min_value: 0
+          max_value: 100
+        threshold: 1.0
+        severity: "error"
+      
+      - name: "username_pattern"
+        rule_type: "pattern"
+        column: "username"
+        parameters:
+          pattern: "^[a-zA-Z0-9_]{3,20}$"
+        threshold: 0.9
+        severity: "warning"

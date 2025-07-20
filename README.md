@@ -1,16 +1,18 @@
 # Data Validator
 
-A flexible data validation module that uses YAML configuration to apply data quality rules against Spark DataFrames in Delta Live Tables. The module supports multiple compute engines including PySpark, DuckDB, and Polars, and integrates with Databricks labs DQX package.
+A flexible data validation module that uses YAML configuration to apply data quality rules against Spark DataFrames in Delta Live Tables. The module supports multiple compute engines including PySpark, Databricks, DuckDB, and Polars, and integrates with Databricks labs DQX package.
 
 ## Features
 
 - **YAML Configuration**: Define data quality rules using intuitive YAML configuration files
-- **Multi-Engine Support**: Execute validation rules using PySpark, DuckDB, or Polars
+- **Multi-Engine Support**: Execute validation rules using PySpark, Databricks, DuckDB, or Polars
+- **Databricks Integration**: Native support for Databricks clusters, Unity Catalog, and Delta Lake
 - **Delta Live Tables Integration**: Native support for Delta Live Tables workflows
 - **Databricks DQX Integration**: Leverage DQX for advanced data quality monitoring
 - **Flexible Rule Types**: Support for completeness, uniqueness, range, pattern, and custom validation rules
 - **Filter Mode**: Apply validation rules as filters to clean data
 - **Comprehensive Reporting**: Generate detailed validation reports with metrics and insights
+- **Job Management**: Built-in utilities for deploying validation jobs in Databricks
 
 ## Installation
 
@@ -88,6 +90,19 @@ clean_df = validator.apply_filters(df, "customers")
 ## Configuration Reference
 
 ### Engine Configuration
+
+#### Databricks Engine
+```yaml
+engine:
+  type: "databricks"
+  connection_params:
+    spark.sql.adaptive.enabled: "true"
+    spark.sql.adaptive.coalescePartitions.enabled: "true"
+    spark.databricks.delta.preview.enabled: "true"
+  options:
+    databricks.runtime.version: "13.3.x-scala2.12"
+    unity_catalog.enabled: "true"
+```
 
 #### PySpark Engine
 ```yaml
@@ -170,6 +185,30 @@ engine:
   severity: "error"
 ```
 
+#### Databricks-Specific Rules
+
+```yaml
+# Unity Catalog lineage validation
+- name: "lineage_validation"
+  rule_type: "unity_catalog_lineage"
+  parameters:
+    databricks:
+      catalog: "main"
+      schema: "customer_data"
+      check_lineage: true
+  severity: "info"
+
+# Delta Lake quality validation
+- name: "delta_quality"
+  rule_type: "delta_quality"
+  parameters:
+    databricks:
+      check_delta_log: true
+      check_file_stats: true
+      validate_partitioning: true
+  severity: "info"
+```
+
 ## Delta Live Tables Integration
 
 ```python
@@ -192,7 +231,96 @@ def validated_customers():
     return validator.apply_filters(df, "customers")
 ```
 
-## Multi-Engine Usage
+## Databricks Cluster Usage
+
+The data validator provides native support for Databricks environments with enhanced features for Unity Catalog, Delta Lake, and cluster management.
+
+### Basic Databricks Usage
+
+```python
+from data_validator import DataValidator
+
+# Initialize validator with Databricks configuration
+validator = DataValidator("databricks_config.yaml")
+
+# Validate Unity Catalog table
+df = spark.table("main.customer_data.customers")
+summary = validator.validate_table(df, "customers")
+
+# Get cluster information
+cluster_info = validator.engine.get_cluster_info()
+print(f"Runtime: {cluster_info['runtime_version']}")
+```
+
+### Unity Catalog Integration
+
+```python
+# Load data from Unity Catalog
+unity_catalog_source = {
+    "type": "unity_catalog",
+    "catalog": "main",
+    "schema": "customer_data",
+    "table": "customers"
+}
+
+df = validator.engine.load_data(unity_catalog_source)
+summary = validator.validate_table(df, "customers")
+```
+
+### Delta Lake Validation
+
+```yaml
+# Databricks-specific validation rules
+tables:
+  - name: "delta_table"
+    rules:
+      - name: "delta_quality_check"
+        rule_type: "delta_quality"
+        parameters:
+          databricks:
+            check_delta_log: true
+            check_file_stats: true
+            validate_partitioning: true
+        severity: "info"
+```
+
+### Databricks Job Deployment
+
+```python
+from data_validator.databricks_utils import DatabricksJobManager
+
+# Create job manager
+manager = DatabricksJobManager()
+
+# Create batch validation job
+job_config = manager.create_validation_job(
+    "data-validation-batch",
+    "/dbfs/config/validation_config.yaml"
+)
+
+# Create streaming validation job
+streaming_config = {
+    "source_table": "streaming_events",
+    "checkpoint_location": "/mnt/checkpoints",
+    "trigger_interval": 60
+}
+
+streaming_job = manager.create_streaming_validation_job(
+    "data-validation-streaming",
+    "/dbfs/config/streaming_config.yaml",
+    streaming_config
+)
+```
+
+### Widget and Secret Management
+
+```python
+# Access Databricks widgets
+table_name = validator.engine.get_widget_value("table_name", "default_table")
+
+# Access Databricks secrets
+api_key = validator.engine.get_secret("my-scope", "api-key")
+```
 
 ### PySpark
 ```python

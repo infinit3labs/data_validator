@@ -1,0 +1,132 @@
+# Databricks Data Validator Configuration
+# This configuration demonstrates data validation in a Databricks cluster environment
+
+version: "1.0"
+
+# Databricks engine configuration
+engine:
+  type: "databricks"
+  connection_params:
+    # Databricks cluster configuration
+    spark.sql.adaptive.enabled: "true"
+    spark.sql.adaptive.coalescePartitions.enabled: "true"
+    spark.sql.adaptive.localShuffleReader.enabled: "true"
+    spark.databricks.delta.preview.enabled: "true"
+    spark.databricks.delta.retentionDurationCheck.enabled: "false"
+  options:
+    # Additional Databricks-specific options
+    databricks.runtime.version: "13.3.x-scala2.12"
+    unity_catalog.enabled: "true"
+
+# DQX integration for Databricks
+dqx:
+  enabled: true
+  output_path: "/dbfs/mnt/data-quality/results"
+  metrics_table: "data_quality.databricks_validation_metrics"
+  quarantine_table: "data_quality.databricks_quarantined_records"
+
+# Global metadata
+metadata:
+  description: "Databricks cluster data validation configuration"
+  environment: "production"
+  created_by: "data_validator"
+
+# Table configurations with Databricks-specific features
+tables:
+  # Unity Catalog table validation
+  - name: "customer_data"
+    description: "Customer data validation with Unity Catalog integration"
+    rules:
+      - name: "customer_id_completeness"
+        description: "Customer ID must not be null"
+        rule_type: "completeness"
+        column: "customer_id"
+        threshold: 0.99
+        severity: "error"
+        enabled: true
+      
+      - name: "email_format_validation"
+        description: "Email must follow valid format"
+        rule_type: "pattern"
+        column: "email"
+        parameters:
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        threshold: 0.95
+        severity: "warning"
+        enabled: true
+      
+      - name: "unity_catalog_lineage_check"
+        description: "Validate Unity Catalog lineage information"
+        rule_type: "unity_catalog_lineage"
+        parameters:
+          databricks:
+            catalog: "main"
+            schema: "customer_data"
+            check_lineage: true
+        severity: "info"
+        enabled: true
+  
+  # Delta Lake table validation
+  - name: "transaction_data"
+    description: "Transaction data validation with Delta Lake features"
+    rules:
+      - name: "transaction_id_uniqueness"
+        description: "Transaction IDs must be unique"
+        rule_type: "uniqueness"
+        column: "transaction_id"
+        severity: "error"
+        enabled: true
+      
+      - name: "amount_range_validation"
+        description: "Transaction amounts must be within reasonable range"
+        rule_type: "range"
+        column: "amount"
+        parameters:
+          min_value: 0.01
+          max_value: 1000000.00
+        threshold: 0.98
+        severity: "warning"
+        enabled: true
+      
+      - name: "delta_table_quality"
+        description: "Validate Delta Lake specific quality metrics"
+        rule_type: "delta_quality"
+        parameters:
+          databricks:
+            check_delta_log: true
+            check_file_stats: true
+            validate_partitioning: true
+        severity: "info"
+        enabled: true
+  
+  # Streaming data validation
+  - name: "streaming_events"
+    description: "Real-time streaming event validation"
+    rules:
+      - name: "event_timestamp_freshness"
+        description: "Events should be recent (within last hour)"
+        rule_type: "custom"
+        expression: "SELECT COUNT(*) FROM {table} WHERE event_timestamp < current_timestamp() - INTERVAL 1 HOUR"
+        threshold: 0.05
+        severity: "warning"
+        enabled: true
+      
+      - name: "event_type_validation"
+        description: "Event type must be from allowed values"
+        rule_type: "custom"
+        expression: "SELECT COUNT(*) FROM {table} WHERE event_type NOT IN ('login', 'logout', 'purchase', 'view', 'click')"
+        threshold: 0.01
+        severity: "error"
+        enabled: true
+
+# Global rules applied to all tables
+global_rules:
+  - name: "workspace_permissions_check"
+    description: "Validate workspace permissions for data access"
+    rule_type: "workspace_permission"
+    parameters:
+      databricks:
+        required_permissions: ["SELECT", "USE_SCHEMA"]
+        check_catalog_access: true
+    severity: "info"
+    enabled: true

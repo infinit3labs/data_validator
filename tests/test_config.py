@@ -7,7 +7,12 @@ import tempfile
 import yaml
 from pathlib import Path
 
-from data_validator.config import ValidationConfig, ValidationRule, TableConfig, EngineConfig
+from data_validator.config import (
+    ValidationConfig,
+    ValidationRule,
+    TableConfig,
+    EngineConfig,
+)
 
 
 def test_validation_rule_creation():
@@ -16,9 +21,9 @@ def test_validation_rule_creation():
         name="test_rule",
         rule_type="completeness",
         column="test_column",
-        severity="error"
+        severity="error",
     )
-    
+
     assert rule.name == "test_rule"
     assert rule.rule_type == "completeness"
     assert rule.column == "test_column"
@@ -34,9 +39,9 @@ def test_validation_rule_with_threshold():
         rule_type="completeness",
         column="test_column",
         threshold=0.95,
-        severity="warning"
+        severity="warning",
     )
-    
+
     assert rule.threshold == 0.95
     assert rule.severity == "warning"
 
@@ -48,7 +53,7 @@ def test_validation_rule_invalid_severity():
             name="test_rule",
             rule_type="completeness",
             column="test_column",
-            severity="invalid"
+            severity="invalid",
         )
 
 
@@ -59,7 +64,7 @@ def test_validation_rule_invalid_threshold():
             name="test_rule",
             rule_type="completeness",
             column="test_column",
-            threshold=1.5
+            threshold=1.5,
         )
 
 
@@ -69,18 +74,20 @@ def test_table_config_creation():
         name="test_rule",
         rule_type="completeness",
         column="test_column",
-        severity="error"
+        severity="error",
     )
-    
+
     table_config = TableConfig(
         name="test_table",
         description="Test table",
-        rules=[rule]
+        data_source="/path/to/table.csv",
+        rules=[rule],
     )
-    
+
     assert table_config.name == "test_table"
     assert len(table_config.rules) == 1
     assert table_config.rules[0].name == "test_rule"
+    assert table_config.data_source == "/path/to/table.csv"
 
 
 def test_engine_config_creation():
@@ -88,9 +95,9 @@ def test_engine_config_creation():
     engine_config = EngineConfig(
         type="pyspark",
         connection_params={"spark.sql.adaptive.enabled": "true"},
-        options={"key": "value"}
+        options={"key": "value"},
     )
-    
+
     assert engine_config.type == "pyspark"
     assert engine_config.connection_params["spark.sql.adaptive.enabled"] == "true"
     assert engine_config.options["key"] == "value"
@@ -108,61 +115,56 @@ def test_validation_config_creation():
         name="test_rule",
         rule_type="completeness",
         column="test_column",
-        severity="error"
+        severity="error",
     )
-    
+
     table_config = TableConfig(
-        name="test_table",
-        rules=[rule]
+        name="test_table", data_source="/tmp/table.csv", rules=[rule]
     )
-    
+
     engine_config = EngineConfig(type="pyspark")
-    
-    config = ValidationConfig(
-        engine=engine_config,
-        tables=[table_config]
-    )
-    
+
+    config = ValidationConfig(engine=engine_config, tables=[table_config])
+
     assert config.version == "1.0"
     assert config.engine.type == "pyspark"
     assert len(config.tables) == 1
     assert config.tables[0].name == "test_table"
+    assert config.tables[0].data_source == "/tmp/table.csv"
 
 
 def test_validation_config_from_yaml():
     """Test loading configuration from YAML file."""
     config_data = {
         "version": "1.0",
-        "engine": {
-            "type": "pyspark",
-            "connection_params": {},
-            "options": {}
-        },
+        "engine": {"type": "pyspark", "connection_params": {}, "options": {}},
         "tables": [
             {
                 "name": "test_table",
+                "data_source": "/tmp/table.csv",
                 "rules": [
                     {
                         "name": "test_rule",
                         "rule_type": "completeness",
                         "column": "test_column",
-                        "severity": "error"
+                        "severity": "error",
                     }
-                ]
+                ],
             }
-        ]
+        ],
     }
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config_data, f)
         temp_path = f.name
-    
+
     try:
         config = ValidationConfig.from_yaml(temp_path)
         assert config.version == "1.0"
         assert config.engine.type == "pyspark"
         assert len(config.tables) == 1
         assert config.tables[0].name == "test_table"
+        assert config.tables[0].data_source == "/tmp/table.csv"
     finally:
         Path(temp_path).unlink()
 
@@ -173,25 +175,19 @@ def test_validation_config_get_table_config():
         name="test_rule",
         rule_type="completeness",
         column="test_column",
-        severity="error"
+        severity="error",
     )
-    
-    table_config = TableConfig(
-        name="test_table",
-        rules=[rule]
-    )
-    
+
+    table_config = TableConfig(name="test_table", rules=[rule])
+
     engine_config = EngineConfig(type="pyspark")
-    
-    config = ValidationConfig(
-        engine=engine_config,
-        tables=[table_config]
-    )
-    
+
+    config = ValidationConfig(engine=engine_config, tables=[table_config])
+
     found_table = config.get_table_config("test_table")
     assert found_table is not None
     assert found_table.name == "test_table"
-    
+
     not_found = config.get_table_config("nonexistent")
     assert not_found is None
 
@@ -203,38 +199,33 @@ def test_validation_config_get_enabled_rules():
         rule_type="completeness",
         column="col1",
         severity="error",
-        enabled=True
+        enabled=True,
     )
-    
+
     rule2 = ValidationRule(
         name="rule2",
         rule_type="uniqueness",
         column="col2",
         severity="warning",
-        enabled=False
+        enabled=False,
     )
-    
+
     global_rule = ValidationRule(
         name="global_rule",
         rule_type="completeness",
         column="global_col",
         severity="error",
-        enabled=True
+        enabled=True,
     )
-    
-    table_config = TableConfig(
-        name="test_table",
-        rules=[rule1, rule2]
-    )
-    
+
+    table_config = TableConfig(name="test_table", rules=[rule1, rule2])
+
     engine_config = EngineConfig(type="pyspark")
-    
+
     config = ValidationConfig(
-        engine=engine_config,
-        tables=[table_config],
-        global_rules=[global_rule]
+        engine=engine_config, tables=[table_config], global_rules=[global_rule]
     )
-    
+
     enabled_rules = config.get_enabled_rules("test_table")
     assert len(enabled_rules) == 2  # 1 table rule + 1 global rule
     assert enabled_rules[0].name == "global_rule"

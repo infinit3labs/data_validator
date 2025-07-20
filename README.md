@@ -258,6 +258,25 @@ class CustomValidationEngine(ValidationEngine):
         pass
 ```
 
+## Running on Databricks
+
+You can execute validations as part of a Databricks job using the bundled CLI.
+
+```bash
+# On a Databricks cluster
+pip install data-validator[all]  # install engine dependencies
+data-validator-job --config /dbfs/path/to/config.yaml \
+                   --report-path /dbfs/path/to/output/report.json
+```
+
+The CLI reads table data sources from the YAML configuration. You can override
+any table source at runtime:
+
+```bash
+data-validator-job --config config.yaml \
+                   --override customers=/dbfs/data/customers.csv
+```
+
 ## API Reference
 
 ### DataValidator Class

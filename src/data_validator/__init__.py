@@ -14,4 +14,10 @@ from .validator import DataValidator
 from .config import ValidationConfig
 from .engines import ValidationEngine
 
-__all__ = ["DataValidator", "ValidationConfig", "ValidationEngine"]
+# Import Databricks utilities conditionally
+try:
+    from .databricks_utils import DatabricksJobManager
+    __all__ = ["DataValidator", "ValidationConfig", "ValidationEngine", "DatabricksJobManager"]
+except ImportError:
+    # DatabricksJobManager not available (missing dependencies)
+    __all__ = ["DataValidator", "ValidationConfig", "ValidationEngine"]

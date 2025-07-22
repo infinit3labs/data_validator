@@ -10,3 +10,4 @@
 - [x] Support env var overrides via Pydantic settings
 - [x] Merge config from Databricks widgets
 - [x] Add pipeline state management for idempotent restarts
+- [x] Add command line interface for local validation

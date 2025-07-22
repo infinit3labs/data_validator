@@ -11,7 +11,7 @@ projects.
 pip install data-validator[duckdb]  # install with optional engine
 ```
 
-The project uses a configuration driven approach. Validation behaviour is
+The project uses a configuration driven approach. Validation behavior is
 defined entirely in YAML files.
 
 ## 2. Create a configuration file

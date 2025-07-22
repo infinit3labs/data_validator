@@ -12,6 +12,7 @@ packages = [{include = "data_validator", from = "src"}]
 
 [tool.poetry.scripts]
 data-validator-job = "data_validator.databricks_job:main"
+data-validator = "data_validator.cli:main"
 
 [project]
 name = "data_validator"

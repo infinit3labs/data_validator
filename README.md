@@ -92,6 +92,14 @@ export VALIDATOR_ENGINE__CONNECTION_PARAMS__DATABASE=":memory:"
 validator = DataValidator("config.yaml")
 ```
 
+### 2.2 Command Line Usage
+
+You can run validations without writing any code using the `data-validator` CLI.
+
+```bash
+data-validator --config config.yaml --sources sources.yaml --output report.json
+```
+
 ### 3. Use as Data Filter
 
 ```python

@@ -5,7 +5,9 @@ Main DataValidator class that orchestrates validation operations.
 from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
 
-from .config import ValidationConfig, ValidationRule, load_config
+from .config import ValidationConfig, ValidationRule
+from .settings import load_config
+from .state import PipelineState
 from .engines import ValidationEngine, ValidationSummary, create_engine
 
 
@@ -16,6 +18,7 @@ class DataValidator:
     This class provides a high-level interface for validating data using
     YAML configuration files and multiple compute engines.
     """
+
     def __init__(
         self,
         config: Union[str, Path, Dict[str, Any], ValidationConfig],
@@ -51,6 +54,9 @@ class DataValidator:
 
         self._engine: Optional[ValidationEngine] = None
         self._dqx_enabled = self.config.dqx.enabled
+        self._state: Optional[PipelineState] = None
+        if self.config.pipeline.state_file:
+            self._state = PipelineState.load(self.config.pipeline.state_file)
 
     @property
     def engine(self) -> ValidationEngine:
@@ -84,6 +90,9 @@ class DataValidator:
         if self._dqx_enabled:
             summary = self._integrate_with_dqx(summary, table_name)
 
+        if self._state:
+            self._state.mark_completed(table_name)
+
         return summary
 
     def validate_all_tables(
@@ -102,6 +111,8 @@ class DataValidator:
 
         with self.engine as eng:
             for table_name, data_source in data_sources.items():
+                if self._state and self._state.is_completed(table_name):
+                    continue
                 rules = self.config.get_enabled_rules(table_name)
                 loaded_data = eng.load_data(data_source)
                 summary = eng.execute_rules(loaded_data, rules, table_name)
@@ -111,6 +122,8 @@ class DataValidator:
                     summary = self._integrate_with_dqx(summary, table_name)
 
                 results[table_name] = summary
+                if self._state:
+                    self._state.mark_completed(table_name)
 
         return results
 
@@ -292,3 +305,8 @@ class DataValidator:
         """Context manager exit."""
         if self._engine:
             self._engine.disconnect()
+
+    def reset_state(self) -> None:
+        """Clear persisted pipeline state."""
+        if self._state:
+            self._state.reset()

@@ -9,3 +9,4 @@
 - [ ] Implement YAML/env based configuration loader
 - [ ] Support env var overrides via Pydantic settings
 - [ ] Merge config from Databricks widgets
+- [ ] Add pipeline state management for idempotent restarts

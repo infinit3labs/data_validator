@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 from pydantic_settings import BaseSettings
@@ -36,6 +36,9 @@ class EnvSettings(BaseSettings):
         env_prefix = "VALIDATOR_"
         extra = "allow"
         case_sensitive = False
+
+
+EnvSettings.model_rebuild()
 
 
 def merge_dicts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -99,4 +102,4 @@ def load_config(
     )
     merged = merge_dicts(base_data, env_overrides)
     merged = merge_dicts(merged, widget_overrides)
-    return ValidationConfig.from_dict(merged)
+    return ValidationConfig.model_validate(merged)

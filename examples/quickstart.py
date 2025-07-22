@@ -9,6 +9,22 @@ from data_validator import DataValidator
 HERE = Path(__file__).parent
 CONFIG_PATH = HERE / "sample_config.yaml"
 
+# Create a default configuration file if it does not exist
+if not CONFIG_PATH.exists():
+    CONFIG_PATH.write_text(
+        """
+        # Default configuration for DataValidator
+        tables:
+          customers:
+            columns:
+              customer_id:
+                type: integer
+                required: true
+              email:
+                type: string
+                format: email
+        """
+    )
 
 def main() -> None:
     """Run a simple validation using the sample configuration."""

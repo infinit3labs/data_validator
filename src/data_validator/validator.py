@@ -5,9 +5,7 @@ Main DataValidator class that orchestrates validation operations.
 from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
 
-from .settings import load_config
-
-from .config import ValidationConfig, ValidationRule
+from .config import ValidationConfig, ValidationRule, load_config
 from .engines import ValidationEngine, ValidationSummary, create_engine
 
 
@@ -18,7 +16,6 @@ class DataValidator:
     This class provides a high-level interface for validating data using
     YAML configuration files and multiple compute engines.
     """
-
     def __init__(
         self,
         config: Union[str, Path, Dict[str, Any], ValidationConfig],
@@ -47,6 +44,8 @@ class DataValidator:
             self.config = ValidationConfig.from_dict(config)
         elif isinstance(config, ValidationConfig):
             self.config = config
+        elif isinstance(config, (str, Path)) or config is None:
+            self.config = load_config(str(config) if config else None)
         else:
             raise ValueError(f"Unsupported config type: {type(config)}")
 

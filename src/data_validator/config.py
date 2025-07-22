@@ -6,7 +6,10 @@ used to define data quality rules.
 """
 
 from typing import Dict, List, Optional, Any, Union
-from pydantic import BaseModel, validator, Field
+import os
+from pydantic import BaseModel, Field
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import yaml
 from pathlib import Path
 
@@ -24,14 +27,14 @@ class ValidationRule(BaseModel):
     enabled: bool = Field(default=True, description="Whether this rule is enabled")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Additional parameters for the rule")
     
-    @validator('severity')
+    @field_validator('severity')
     def validate_severity(cls, v):
         allowed_severities = {'error', 'warning', 'info'}
         if v not in allowed_severities:
             raise ValueError(f"Severity must be one of {allowed_severities}")
         return v
     
-    @validator('threshold')
+    @field_validator('threshold')
     def validate_threshold(cls, v):
         if v is not None and not (0.0 <= v <= 1.0):
             raise ValueError("Threshold must be between 0.0 and 1.0")
@@ -45,7 +48,7 @@ class TableConfig(BaseModel):
     description: Optional[str] = Field(None, description="Table description")
     rules: List[ValidationRule] = Field(description="List of validation rules for this table")
     
-    @validator('rules')
+    @field_validator('rules')
     def validate_rules_not_empty(cls, v):
         if not v:
             raise ValueError("At least one validation rule must be defined")
@@ -59,7 +62,7 @@ class EngineConfig(BaseModel):
     connection_params: Dict[str, Any] = Field(default_factory=dict, description="Engine connection parameters")
     options: Dict[str, Any] = Field(default_factory=dict, description="Engine-specific options")
     
-    @validator('type')
+    @field_validator('type')
     def validate_engine_type(cls, v):
         allowed_engines = {'pyspark', 'databricks', 'duckdb', 'polars'}
         if v not in allowed_engines:
@@ -98,10 +101,6 @@ class ValidationConfig(BaseModel):
         
         return cls(**data)
     
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ValidationConfig':
-        """Load configuration from dictionary."""
-        return cls(**data)
     
     def to_yaml(self, yaml_path: Union[str, Path]) -> None:
         """Save configuration to YAML file."""
@@ -117,7 +116,7 @@ class ValidationConfig(BaseModel):
             if table.name == table_name:
                 return table
         return None
-    
+
     def get_enabled_rules(self, table_name: Optional[str] = None) -> List[ValidationRule]:
         """Get all enabled rules, optionally filtered by table name."""
         rules = []
@@ -136,3 +135,66 @@ class ValidationConfig(BaseModel):
                 rules.extend([rule for rule in table.rules if rule.enabled])
         
         return rules
+
+
+def _deep_merge(base: Dict[str, Any], overrides: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively merge two dictionaries."""
+    result = dict(base)
+    for key, value in overrides.items():
+        if (
+            key in result
+            and isinstance(result[key], dict)
+            and isinstance(value, dict)
+        ):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+def _env_to_dict(prefix: str) -> Dict[str, Any]:
+    """Convert environment variables with prefix to a nested dictionary."""
+    data: Dict[str, Any] = {}
+    for env, value in os.environ.items():
+        if env.startswith(prefix):
+            path = env[len(prefix):].lower().split("__")
+            current = data
+            for part in path[:-1]:
+                current = current.setdefault(part, {})
+            current[path[-1]] = yaml.safe_load(value)
+    return data
+
+
+class ValidationSettings(BaseSettings):
+    """Pydantic settings allowing environment variable overrides."""
+
+    version: Optional[str] = None
+    metadata: Dict[str, Any] = {}
+    engine: Optional[EngineConfig] = None
+    dqx: Optional[DQXConfig] = None
+    tables: Optional[List[TableConfig]] = None
+    global_rules: Optional[List[ValidationRule]] = None
+
+    model_config = SettingsConfigDict(env_prefix="DV_", env_nested_delimiter="__", extra="ignore")
+
+
+def load_config(yaml_path: Optional[Union[str, Path]] = None) -> ValidationConfig:
+    """Load configuration from YAML file and environment variables."""
+    # Determine config path from parameter, widget env, or environment variable
+    if yaml_path is None:
+        yaml_path = os.environ.get("DV_CONFIG_PATH") or os.environ.get("DATABRICKS_WIDGET_CONFIG")
+
+    data: Dict[str, Any] = {}
+    if yaml_path:
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+
+    # Convert Databricks widget environment variables to DV_ style
+    widget_overrides = _env_to_dict("DATABRICKS_WIDGET_")
+    data = _deep_merge(data, widget_overrides)
+
+    env_settings = ValidationSettings()
+    env_overrides = env_settings.model_dump(exclude_none=True)
+    data = _deep_merge(data, env_overrides)
+
+    return ValidationConfig(**data)

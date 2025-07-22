@@ -5,6 +5,7 @@ Tests for Databricks validation engine and utilities.
 import pytest
 import tempfile
 import os
+import yaml
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
@@ -360,14 +361,16 @@ def test_databricks_config_validation():
         }]
     }
     
-    config = ValidationConfig.from_dict(config_dict)
-    assert config.engine.type == "databricks"
-    
-    with patch('data_validator.engines.databricks_engine.PYSPARK_AVAILABLE', True):
-        validator = DataValidator(config)
-        assert validator.config.engine.type == "databricks"
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump(config_dict, f)
+        temp_path = f.name
 
-
+    try:
+        with patch('data_validator.engines.databricks_engine.PYSPARK_AVAILABLE', True):
+            validator = DataValidator(temp_path)
+            assert validator.config.engine.type == "databricks"
+    finally:
+        Path(temp_path).unlink()
 def test_databricks_error_handling():
     """Test error handling in Databricks engine."""
     config = create_databricks_config()

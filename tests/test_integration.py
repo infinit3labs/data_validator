@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import pandas as pd
-from data_validator import DataValidator
+from data_validator import DataValidator, ValidationConfig
 
 
 def create_test_data():
@@ -40,7 +40,7 @@ def create_test_data():
 
 def create_test_config():
     """Create a test configuration."""
-    config = {
+    config_dict = {
         "version": "1.0",
         "metadata": {
             "description": "Integration test configuration",
@@ -121,7 +121,7 @@ def create_test_config():
             }
         ]
     }
-    return config
+    return config_dict
 
 
 def test_validation_functionality():
@@ -137,8 +137,8 @@ def test_validation_functionality():
     print(data.info())
     
     # Create configuration
-    config = create_test_config()
-    
+    config = ValidationConfig(**create_test_config())
+
     # Initialize validator
     validator = DataValidator(config)
     print(f"\nInitialized validator with engine: {validator.config.engine.type}")
@@ -175,7 +175,7 @@ def test_filter_functionality():
     
     # Create test data
     data = create_test_data()
-    config = create_test_config()
+    config = ValidationConfig(**create_test_config())
     validator = DataValidator(config)
     
     print(f"Original data shape: {data.shape}")
@@ -201,7 +201,7 @@ def test_report_generation():
     
     # Run validation
     data = create_test_data()
-    config = create_test_config()
+    config = ValidationConfig(**create_test_config())
     validator = DataValidator(config)
     summary = validator.validate_table(data, "customers")
     
@@ -248,7 +248,7 @@ def test_multi_table_validation():
     })
     
     # Create multi-table configuration
-    config = {
+    config_dict = {
         "version": "1.0",
         "engine": {"type": "duckdb", "connection_params": {"database": ":memory:"}},
         "dqx": {"enabled": False},
@@ -287,7 +287,8 @@ def test_multi_table_validation():
             }
         ]
     }
-    
+
+    config = ValidationConfig(**config_dict)
     validator = DataValidator(config)
     
     # Validate multiple tables

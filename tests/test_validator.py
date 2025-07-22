@@ -62,8 +62,15 @@ def test_data_validator_creation_with_dict():
         ]
     }
     
-    validator = DataValidator(config_dict)
-    assert validator.config.engine.type == "duckdb"
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump(config_dict, f)
+        temp_path = f.name
+
+    try:
+        validator = DataValidator(temp_path)
+        assert validator.config.engine.type == "duckdb"
+    finally:
+        Path(temp_path).unlink()
 
 
 def test_data_validator_creation_with_yaml_file():

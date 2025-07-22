@@ -68,3 +68,6 @@ results = validator.validate_all_tables(sources)
 ```
 
 For a runnable example see [`examples/quickstart.py`](../examples/quickstart.py).
+
+## Configuration Merge Demo
+Run `python examples/config_merge_demo.py` to see environment overrides merged with YAML.

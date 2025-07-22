@@ -116,7 +116,7 @@ class DatabricksValidationEngine(PySparkValidationEngine):
                 return None
         else:
             # Fallback to environment variables for testing/development
-            env_key = f"DATABRICKS_SECRET_{scope.upper()}_{key.upper()}"
+            env_key = f"DATABRICKS_SECRET_{scope.upper()}_{key.upper().replace('-', '_')}"
             return os.environ.get(env_key)
     
     def load_data(self, source: Union[str, DataFrame, Dict[str, Any]]) -> DataFrame:

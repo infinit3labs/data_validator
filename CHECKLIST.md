@@ -5,3 +5,4 @@
 - [x] Update documentation with instructions
 - [x] Provide poetry configuration and CLI entrypoint
 - [x] Add unit tests for new functionality
+- [x] Support config merging from YAML, widgets, and env vars

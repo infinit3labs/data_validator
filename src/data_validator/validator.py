@@ -5,7 +5,7 @@ Main DataValidator class that orchestrates validation operations.
 from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
 
-from .config import ValidationConfig, ValidationRule
+from .config import ValidationConfig, ValidationRule, load_config
 from .engines import ValidationEngine, ValidationSummary, create_engine
 
 
@@ -17,19 +17,17 @@ class DataValidator:
     YAML configuration files and multiple compute engines.
     """
     
-    def __init__(self, config: Union[str, Path, Dict[str, Any], ValidationConfig]):
+    def __init__(self, config: Optional[Union[str, Path, ValidationConfig]] = None):
         """
         Initialize DataValidator with configuration.
         
         Args:
-            config: Configuration as YAML file path, dictionary, or ValidationConfig object
-        """
-        if isinstance(config, (str, Path)):
-            self.config = ValidationConfig.from_yaml(config)
-        elif isinstance(config, dict):
-            self.config = ValidationConfig.from_dict(config)
-        elif isinstance(config, ValidationConfig):
+            config: Optional configuration path or ValidationConfig object.
+            """
+        if isinstance(config, ValidationConfig):
             self.config = config
+        elif isinstance(config, (str, Path)) or config is None:
+            self.config = load_config(str(config) if config else None)
         else:
             raise ValueError(f"Unsupported config type: {type(config)}")
         

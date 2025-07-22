@@ -26,11 +26,11 @@ def _get_dbutils():
 class EnvSettings(BaseSettings):
     """Load configuration values from environment variables."""
 
-    config_file: str | None = None
-    engine__type: str | None = None
-    engine__connection_params: dict[str, Any] | None = None
-    engine__options: dict[str, Any] | None = None
-    dqx__enabled: bool | None = None
+    config_file: Optional[str] = None
+    engine__type: Optional[str] = None
+    engine__connection_params: Optional[dict[str, Any]] = None
+    engine__options: Optional[dict[str, Any]] = None
+    dqx__enabled: Optional[bool] = None
 
     class Config:
         env_prefix = "VALIDATOR_"

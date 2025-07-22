@@ -11,9 +11,10 @@ A flexible data validation module that uses YAML configuration to apply data qua
 - **Databricks DQX Integration**: Leverage DQX for advanced data quality monitoring
 - **Flexible Rule Types**: Support for completeness, uniqueness, range, pattern, and custom validation rules
 - **Filter Mode**: Apply validation rules as filters to clean data
-- **Environment Overrides**: Configure any option using `DV_` environment variables or Databricks widgets
+- **Environment Overrides**: Configure any option using `VALIDATOR_` environment variables or Databricks widgets
 - **Comprehensive Reporting**: Generate detailed validation reports with metrics and insights
 - **Job Management**: Built-in utilities for deploying validation jobs in Databricks
+- **Pipeline State Management**: Resume pipelines safely using a persisted state file
 
 ## Installation
 
@@ -86,8 +87,8 @@ print(f"Success rate: {summary.overall_success_rate:.2%}")
 ### 2.1 Override with Environment Variables
 
 ```bash
-export DV_ENGINE__TYPE=duckdb
-export DV_ENGINE__CONNECTION_PARAMS__DATABASE=":memory:"
+export VALIDATOR_ENGINE__TYPE=duckdb
+export VALIDATOR_ENGINE__CONNECTION_PARAMS__DATABASE=":memory:"
 validator = DataValidator("config.yaml")
 ```
 

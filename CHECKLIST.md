@@ -6,7 +6,7 @@
 - [x] Provide poetry configuration and CLI entrypoint
 - [x] Add unit tests for new functionality
 - [x] Support config merging from YAML, widgets, and env vars
-- [ ] Implement YAML/env based configuration loader
-- [ ] Support env var overrides via Pydantic settings
-- [ ] Merge config from Databricks widgets
-- [ ] Add pipeline state management for idempotent restarts
+- [x] Implement YAML/env based configuration loader
+- [x] Support env var overrides via Pydantic settings
+- [x] Merge config from Databricks widgets
+- [x] Add pipeline state management for idempotent restarts

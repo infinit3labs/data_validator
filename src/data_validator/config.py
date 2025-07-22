@@ -61,7 +61,7 @@ class EngineConfig(BaseModel):
     
     @validator('type')
     def validate_engine_type(cls, v):
-        allowed_engines = {'pyspark', 'duckdb', 'polars'}
+        allowed_engines = {'pyspark', 'databricks', 'duckdb', 'polars'}
         if v not in allowed_engines:
             raise ValueError(f"Engine type must be one of {allowed_engines}")
         return v

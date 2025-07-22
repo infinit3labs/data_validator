@@ -352,6 +352,20 @@ validator = DataValidator("polars_config.yaml")
 summary = validator.validate_table(df, "my_table")
 ```
 
+## Databricks Job Usage
+
+The package includes a helper module to execute validation in a Databricks job.
+Prepare a YAML file listing your data sources and run:
+
+```bash
+python -m data_validator.databricks_job \
+  --config /dbfs/path/to/config.yaml \
+  --sources /dbfs/path/to/sources.yaml \
+  --output /dbfs/path/to/report.json
+```
+
+Refer to `docs/databricks_job.md` for more details.
+
 ## Advanced Features
 
 ### Batch Validation

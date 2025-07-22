@@ -193,7 +193,7 @@ def load_config(yaml_path: Optional[Union[str, Path]] = None) -> ValidationConfi
     widget_overrides = _env_to_dict("DATABRICKS_WIDGET_")
     data = _deep_merge(data, widget_overrides)
 
-    env_settings = ValidationSettings()  # type: ignore[arg-type]
+    env_settings = ValidationSettings()
     env_overrides = env_settings.model_dump(exclude_none=True)
     data = _deep_merge(data, env_overrides)
 

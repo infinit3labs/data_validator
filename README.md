@@ -32,6 +32,8 @@ pip install data-validator[dev]       # Includes testing and linting tools
 
 ## Quick Start
 
+For a guided tutorial see [docs/getting_started.md](docs/getting_started.md).
+
 ### 1. Create a YAML Configuration
 
 ```yaml
@@ -437,3 +439,4 @@ MIT License - see LICENSE file for details.
 For issues and questions:
 - GitHub Issues: [Report bugs and request features](https://github.com/infinit3labs/data_validator/issues)
 - Documentation: [Full documentation](https://github.com/infinit3labs/data_validator/wiki)
+- Local Docs: [docs/getting_started.md](docs/getting_started.md)

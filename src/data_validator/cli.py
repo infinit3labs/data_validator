@@ -41,7 +41,7 @@ def run_cli(config_path: str, sources_path: Optional[str], table: Optional[str],
     summaries: Dict[str, Any] = {}
     if sources_path:
         with open(sources_path, "r", encoding="utf-8") as f:
-            sources = json.load(f) if sources_path.endswith(".json") else __import__("yaml").safe_load(f)
+            sources = json.load(f) if sources_path.endswith(".json") else yaml.safe_load(f)
         if table:
             data = sources.get(table)
             if data is None:

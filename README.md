@@ -98,6 +98,23 @@ validator = DataValidator("config.yaml")
 clean_df = validator.apply_filters(df, "customers")
 ```
 
+### 4. Environment Overrides and Widgets
+
+Configuration values can be overridden using environment variables or Databricks
+widgets when running on Databricks. Environment variable names mirror the YAML
+structure using double underscores. For example:
+
+```bash
+export VALIDATOR_ENGINE__TYPE=duckdb
+export VALIDATOR_DQX__ENABLED=false
+```
+
+You can also provide a widget named `engine` in Databricks to override the
+engine type.
+
+See [docs/config_merge.md](docs/config_merge.md) for more examples.
+
+
 ## Configuration Reference
 
 ### Engine Configuration

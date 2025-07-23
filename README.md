@@ -465,6 +465,8 @@ class CustomValidationEngine(ValidationEngine):
 5. Run tests: `pytest`
 6. Submit a pull request
 
+See our [development roadmap](docs/roadmap.md) for planned features and contribution opportunities.
+
 ## License
 
 MIT License - see LICENSE file for details.

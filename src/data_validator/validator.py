@@ -52,6 +52,9 @@ class DataValidator:
         else:
             raise ValueError(f"Unsupported config type: {type(config)}")
 
+        if self.config.require_sql_rules:
+            self.config.validate_sql_snippets()
+
         self._engine: Optional[ValidationEngine] = None
         self._dqx_enabled = self.config.dqx.enabled
         self._state: Optional[PipelineState] = None

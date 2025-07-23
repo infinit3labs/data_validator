@@ -126,6 +126,10 @@ class ValidationConfig(BaseModel):
     global_rules: List[ValidationRule] = Field(
         default_factory=list, description="Global validation rules"
     )
+    require_sql_rules: bool = Field(
+        default=False,
+        description="If True, all rules must provide an SQL expression for portability",
+    )
 
     @classmethod
     def from_yaml(cls, yaml_path: Union[str, Path]) -> "ValidationConfig":
@@ -174,6 +178,19 @@ class ValidationConfig(BaseModel):
                 rules.extend([rule for rule in table.rules if rule.enabled])
 
         return rules
+
+    def validate_sql_snippets(self) -> None:
+        """Ensure that all enabled rules include an SQL expression."""
+        for rule in self.global_rules:
+            if rule.enabled and (not rule.expression or not rule.expression.strip()):
+                raise ValueError(f"Rule '{rule.name}' must define a non-empty SQL expression")
+
+        for table in self.tables:
+            for rule in table.rules:
+                if rule.enabled and (not rule.expression or not rule.expression.strip()):
+                    raise ValueError(
+                        f"Rule '{rule.name}' in table '{table.name}' must define a non-empty SQL expression"
+                    )
 
 
 def _deep_merge(base: Dict[str, Any], overrides: Dict[str, Any]) -> Dict[str, Any]:

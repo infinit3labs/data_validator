@@ -11,3 +11,5 @@
 - [x] Merge config from Databricks widgets
 - [x] Add pipeline state management for idempotent restarts
 - [x] Add command line interface for local validation
+- [x] In-memory DuckDB engine with SQL rule enforcement
+- [x] Demo script and docs for SQL validation

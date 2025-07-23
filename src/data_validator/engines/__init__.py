@@ -119,6 +119,9 @@ def create_engine(config: EngineConfig) -> ValidationEngine:
     if config.type == "pyspark":
         from .pyspark_engine import PySparkValidationEngine
         return PySparkValidationEngine(config)
+    elif config.type == "databricks":
+        from .databricks_engine import DatabricksValidationEngine
+        return DatabricksValidationEngine(config)
     elif config.type == "duckdb":
         from .duckdb_engine import DuckDBValidationEngine
         return DuckDBValidationEngine(config)

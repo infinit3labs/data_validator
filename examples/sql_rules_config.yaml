@@ -1,0 +1,25 @@
+version: "1.0"
+require_sql_rules: true
+engine:
+  type: "duckdb"
+  connection_params:
+    database: ":memory:"
+
+# Table-specific rules expressed as SQL snippets
+# Each expression should evaluate to number of failing rows
+
+tables:
+  - name: "customers"
+    rules:
+      - name: "id_not_null"
+        rule_type: "custom"
+        expression: "SELECT COUNT(*) FROM {table} WHERE id IS NULL"
+        severity: "error"
+      - name: "name_not_null"
+        rule_type: "custom"
+        expression: "SELECT COUNT(*) FROM {table} WHERE name IS NULL"
+        severity: "error"
+      - name: "email_valid"
+        rule_type: "custom"
+        expression: "SELECT COUNT(*) FROM {table} WHERE email NOT LIKE '%@%.'"
+        severity: "warning"

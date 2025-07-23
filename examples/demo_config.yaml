@@ -1,0 +1,27 @@
+version: "1.0"
+engine:
+  type: "duckdb"
+  connection_params:
+    database: ":memory:"
+tables:
+  - name: "users"
+    rules:
+      - name: "id_completeness"
+        rule_type: "completeness"
+        column: "id"
+        severity: "error"
+      - name: "email_format"
+        rule_type: "pattern"
+        column: "email"
+        parameters:
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        threshold: 0.8
+        severity: "warning"
+      - name: "age_range"
+        rule_type: "range"
+        column: "age"
+        parameters:
+          min_value: 0
+          max_value: 120
+        threshold: 0.9
+        severity: "error"

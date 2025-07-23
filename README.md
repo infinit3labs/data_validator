@@ -1,6 +1,7 @@
 # Data Validator
 
-A flexible data validation module that uses YAML configuration to apply data quality rules against Spark DataFrames in Delta Live Tables. The module supports multiple compute engines including PySpark, Databricks, DuckDB, and Polars, and integrates with Databricks labs DQX package.
+A flexible data validation module that uses YAML configuration to apply data quality rules against Spark DataFrames in Delta Live Tables. The module supports multiple compute engines including PySpark, DuckDB, and Polars, and integrates with Databricks labs DQX package.
+For a step-by-step guide, see [docs/user_guide.md](docs/user_guide.md).
 
 ## Features
 

@@ -163,6 +163,19 @@ engine:
     memory_limit: "2GB"
 ```
 
+##### In-Memory SQL Validation
+You can enforce that all validation rules are portable SQL snippets by enabling
+`require_sql_rules`. This works well with the in-memory DuckDB engine.
+
+```yaml
+require_sql_rules: true
+engine:
+  type: "duckdb"
+  connection_params:
+    database: ":memory:"
+```
+Run the demo with `python examples/duckdb_sql_demo.py`.
+
 #### Polars Engine
 ```yaml
 engine:

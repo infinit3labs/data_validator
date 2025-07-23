@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import yaml
+
 from . import DataValidator
 
 
@@ -34,14 +36,21 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def run_cli(config_path: str, sources_path: Optional[str], table: Optional[str], output_path: Optional[str]) -> None:
+def run_cli(
+    config_path: str,
+    sources_path: Optional[str],
+    table: Optional[str],
+    output_path: Optional[str],
+) -> None:
     """Execute validation based on CLI arguments."""
     validator = DataValidator(config_path)
 
     summaries: Dict[str, Any] = {}
     if sources_path:
         with open(sources_path, "r", encoding="utf-8") as f:
-            sources = json.load(f) if sources_path.endswith(".json") else yaml.safe_load(f)
+            sources = (
+                json.load(f) if sources_path.endswith(".json") else yaml.safe_load(f)
+            )
         if table:
             data = sources.get(table)
             if data is None:

@@ -19,7 +19,7 @@ DATA = pd.DataFrame(
 )
 
 
-def run_demo() -> "data_validator.engines.ValidationSummary":
+def run_demo() -> ValidationSummary:
     """Execute the demo validation run."""
     config_path = Path(__file__).parent / "demo_config.yaml"
     validator = DataValidator(config_path)

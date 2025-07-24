@@ -45,6 +45,8 @@ class ValidationEngine(ABC):
     def __init__(self, config: EngineConfig):
         self.config = config
         self._connection = None
+        self._max_retries = config.options.get('max_retries', 3)
+        self._retry_delay = config.options.get('retry_delay', 1.0)
     
     @abstractmethod
     def connect(self) -> None:
@@ -70,18 +72,130 @@ class ValidationEngine(ABC):
     def apply_filter(self, data: Any, rule: ValidationRule) -> Any:
         """Apply validation rule as a filter and return filtered data."""
         pass
+
+    def _is_transient_error(self, error: Exception) -> bool:
+        """Check if an error is transient and should be retried."""
+        # Default implementation for common transient errors
+        error_str = str(error).lower()
+        transient_patterns = [
+            'connection', 'timeout', 'network', 'temporary', 'transient',
+            'unavailable', 'overloaded', 'throttled', 'rate limit'
+        ]
+        return any(pattern in error_str for pattern in transient_patterns)
+
+    def _execute_with_retry(self, operation, *args, **kwargs):
+        """Execute an operation with retry logic for transient failures."""
+        import time
+        
+        last_exception = None
+        for attempt in range(self._max_retries + 1):
+            try:
+                return operation(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                if attempt < self._max_retries and self._is_transient_error(e):
+                    time.sleep(self._retry_delay * (2 ** attempt))  # Exponential backoff
+                    # Try to reconnect for connection-related errors
+                    if 'connection' in str(e).lower():
+                        try:
+                            self.disconnect()
+                            self.connect()
+                        except:
+                            pass  # Ignore reconnection errors, let the retry handle it
+                    continue
+                else:
+                    raise e
+        
+        raise last_exception
+
+    def connect_with_retry(self) -> None:
+        """Connect with retry logic for transient failures."""
+        self._execute_with_retry(self.connect)
     
-    def execute_rules(self, data: Any, rules: List[ValidationRule], table_name: str = "unknown") -> ValidationSummary:
-        """Execute multiple validation rules against the data."""
+    def load_data_with_retry(self, source: Union[str, Any]) -> Any:
+        """Load data with retry logic for transient failures."""
+        return self._execute_with_retry(self.load_data, source)
+    
+    def execute_rule_with_retry(self, data: Any, rule: ValidationRule) -> ValidationResult:
+        """Execute rule with retry logic for transient failures."""
+        return self._execute_with_retry(self.execute_rule, data, rule)
+    
+    def execute_rules(self, data: Any, rules: List[ValidationRule], table_name: str = "unknown", 
+                     state_manager=None) -> ValidationSummary:
+        """Execute multiple validation rules against the data with state-based resumption."""
         import time
         
         start_time = time.time()
         results = []
         
         for rule in rules:
-            if rule.enabled:
-                result = self.execute_rule(data, rule)
+            if not rule.enabled:
+                continue
+                
+            # Check if rule is already completed (for resumption)
+            if state_manager and state_manager.is_rule_completed(table_name, rule.name):
+                # Try to get cached result
+                cached_rule_result = None
+                table_state = state_manager.state.get(table_name, {})
+                rule_state = table_state.get("rules", {}).get(rule.name, {})
+                cached_rule_result = rule_state.get("result")
+                
+                if cached_rule_result:
+                    # Reconstruct ValidationResult from cached data
+                    result = ValidationResult(
+                        rule_name=cached_rule_result.get("rule_name", rule.name),
+                        rule_type=cached_rule_result.get("rule_type", rule.rule_type),
+                        passed=cached_rule_result.get("passed", False),
+                        failed_count=cached_rule_result.get("failed_count", 0),
+                        total_count=cached_rule_result.get("total_count", 0),
+                        success_rate=cached_rule_result.get("success_rate", 0.0),
+                        message=cached_rule_result.get("message", ""),
+                        severity=cached_rule_result.get("severity", rule.severity),
+                        execution_time_ms=cached_rule_result.get("execution_time_ms", 0),
+                        metadata=cached_rule_result.get("metadata", {})
+                    )
+                    results.append(result)
+                    continue
+            
+            # Execute the rule with retry logic
+            try:
+                result = self.execute_rule_with_retry(data, rule)
                 results.append(result)
+                
+                # Cache the result for recovery
+                if state_manager:
+                    result_dict = {
+                        "rule_name": result.rule_name,
+                        "rule_type": result.rule_type,
+                        "passed": result.passed,
+                        "failed_count": result.failed_count,
+                        "total_count": result.total_count,
+                        "success_rate": result.success_rate,
+                        "message": result.message,
+                        "severity": result.severity,
+                        "execution_time_ms": result.execution_time_ms,
+                        "metadata": result.metadata
+                    }
+                    state_manager.mark_rule_completed(table_name, rule.name, result_dict)
+                    
+            except Exception as e:
+                # Create a failed result for consistency
+                failed_result = ValidationResult(
+                    rule_name=rule.name,
+                    rule_type=rule.rule_type,
+                    passed=False,
+                    failed_count=1,
+                    total_count=1,
+                    success_rate=0.0,
+                    message=f"Rule execution failed: {str(e)}",
+                    severity=rule.severity,
+                    execution_time_ms=0,
+                    metadata={"error": str(e), "error_type": type(e).__name__}
+                )
+                results.append(failed_result)
+                
+                # Don't cache failed results - they should be retried
+                continue
         
         end_time = time.time()
         execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
@@ -107,11 +221,15 @@ class ValidationEngine(ABC):
         )
     
     def __enter__(self):
-        self.connect()
+        self.connect_with_retry()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.disconnect()
+        try:
+            self.disconnect()
+        except:
+            # Ignore errors during cleanup
+            pass
 
 
 def create_engine(config: EngineConfig) -> ValidationEngine:

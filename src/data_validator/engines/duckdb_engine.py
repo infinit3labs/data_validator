@@ -35,9 +35,11 @@ class DuckDBValidationEngine(ValidationEngine):
             db_path = self.config.connection_params.get("database", ":memory:")
             self._connection = duckdb.connect(db_path)
             
-            # Apply additional configuration options
+            # Apply DuckDB-specific configuration options (filter out engine-level options)
+            engine_options = {'max_retries', 'retry_delay'}
             for key, value in self.config.options.items():
-                self._connection.execute(f"SET {key} = '{value}'")
+                if key not in engine_options:
+                    self._connection.execute(f"SET {key} = '{value}'")
     
     def disconnect(self) -> None:
         """Close DuckDB connection."""

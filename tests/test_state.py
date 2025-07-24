@@ -62,4 +62,8 @@ def test_validator_uses_state(tmp_path: Path) -> None:
     assert set(res1.keys()) == {"t1", "t2"}
 
     res2 = validator.validate_all_tables({"t1": df1, "t2": df2})
-    assert res2 == {}
+    # New behavior: returns cached results instead of empty dict
+    assert set(res2.keys()) == {"t1", "t2"}
+    # Verify the results are equivalent (from cache)
+    assert res2["t1"].total_rules == res1["t1"].total_rules
+    assert res2["t2"].total_rules == res1["t2"].total_rules

@@ -1,0 +1,2 @@
+customers: "examples/customers.csv"
+orders: "examples/orders.csv"

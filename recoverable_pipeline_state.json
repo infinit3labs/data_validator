@@ -1,0 +1,182 @@
+{
+  "customers": {
+    "status": "completed",
+    "started_at": "2025-07-24T10:11:49.391678",
+    "rules": {
+      "id_completeness": {
+        "status": "completed",
+        "completed_at": "2025-07-24T10:11:49.398754",
+        "result": {
+          "rule_name": "id_completeness",
+          "rule_type": "completeness",
+          "passed": false,
+          "failed_count": -1,
+          "total_count": -1,
+          "success_rate": 0.0,
+          "message": "Rule execution failed: Binder Error: Referenced column \"customer_id\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_id IS NULL\n                                                            ^",
+          "severity": "error",
+          "execution_time_ms": 0.78582763671875,
+          "metadata": {
+            "engine": "duckdb",
+            "error": "Binder Error: Referenced column \"customer_id\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_id IS NULL\n                                                            ^"
+          }
+        }
+      },
+      "name_completeness": {
+        "status": "completed",
+        "completed_at": "2025-07-24T10:11:49.399635",
+        "result": {
+          "rule_name": "name_completeness",
+          "rule_type": "completeness",
+          "passed": false,
+          "failed_count": -1,
+          "total_count": -1,
+          "success_rate": 0.0,
+          "message": "Rule execution failed: Binder Error: Referenced column \"customer_name\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_name IS NULL\n                                                            ^",
+          "severity": "error",
+          "execution_time_ms": 0.5674362182617188,
+          "metadata": {
+            "engine": "duckdb",
+            "error": "Binder Error: Referenced column \"customer_name\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_name IS NULL\n                                                            ^"
+          }
+        }
+      }
+    },
+    "results": {
+      "table_name": "customers",
+      "total_rules": 2,
+      "passed_rules": 0,
+      "failed_rules": 2,
+      "warning_rules": 0,
+      "error_rules": 2,
+      "overall_success_rate": 0.0,
+      "total_execution_time_ms": 1.9252300262451172,
+      "results": [
+        {
+          "rule_name": "id_completeness",
+          "rule_type": "completeness",
+          "passed": false,
+          "failed_count": -1,
+          "total_count": -1,
+          "success_rate": 0.0,
+          "message": "Rule execution failed: Binder Error: Referenced column \"customer_id\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_id IS NULL\n                                                            ^",
+          "severity": "error",
+          "execution_time_ms": 0.78582763671875,
+          "metadata": {
+            "engine": "duckdb",
+            "error": "Binder Error: Referenced column \"customer_id\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_id IS NULL\n                                                            ^"
+          }
+        },
+        {
+          "rule_name": "name_completeness",
+          "rule_type": "completeness",
+          "passed": false,
+          "failed_count": -1,
+          "total_count": -1,
+          "success_rate": 0.0,
+          "message": "Rule execution failed: Binder Error: Referenced column \"customer_name\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_name IS NULL\n                                                            ^",
+          "severity": "error",
+          "execution_time_ms": 0.5674362182617188,
+          "metadata": {
+            "engine": "duckdb",
+            "error": "Binder Error: Referenced column \"customer_name\" not found in FROM clause!\nCandidate bindings: \"name\"\n\nLINE 1: SELECT COUNT(*) FROM temp_table_1753351909391 WHERE customer_name IS NULL\n                                                            ^"
+          }
+        }
+      ]
+    },
+    "completed_at": "2025-07-24T10:11:49.399886"
+  },
+  "orders": {
+    "status": "completed",
+    "started_at": "2025-07-24T10:11:49.400149",
+    "rules": {
+      "order_id_completeness": {
+        "status": "completed",
+        "completed_at": "2025-07-24T10:11:49.402846",
+        "result": {
+          "rule_name": "order_id_completeness",
+          "rule_type": "completeness",
+          "passed": true,
+          "failed_count": 0,
+          "total_count": 5,
+          "success_rate": 1.0,
+          "message": "Rule 'order_id_completeness': 0/5 failed records",
+          "severity": "error",
+          "execution_time_ms": 0.6518363952636719,
+          "metadata": {
+            "engine": "duckdb",
+            "rule_parameters": {}
+          }
+        }
+      },
+      "amount_range": {
+        "status": "completed",
+        "completed_at": "2025-07-24T10:11:49.403888",
+        "result": {
+          "rule_name": "amount_range",
+          "rule_type": "range",
+          "passed": true,
+          "failed_count": 0,
+          "total_count": 5,
+          "success_rate": 1.0,
+          "message": "Rule 'amount_range': 0/5 failed records",
+          "severity": "warning",
+          "execution_time_ms": 0.7174015045166016,
+          "metadata": {
+            "engine": "duckdb",
+            "rule_parameters": {
+              "min_value": 0,
+              "max_value": 10000
+            }
+          }
+        }
+      }
+    },
+    "results": {
+      "table_name": "orders",
+      "total_rules": 2,
+      "passed_rules": 2,
+      "failed_rules": 0,
+      "warning_rules": 0,
+      "error_rules": 0,
+      "overall_success_rate": 1.0,
+      "total_execution_time_ms": 2.026081085205078,
+      "results": [
+        {
+          "rule_name": "order_id_completeness",
+          "rule_type": "completeness",
+          "passed": true,
+          "failed_count": 0,
+          "total_count": 5,
+          "success_rate": 1.0,
+          "message": "Rule 'order_id_completeness': 0/5 failed records",
+          "severity": "error",
+          "execution_time_ms": 0.6518363952636719,
+          "metadata": {
+            "engine": "duckdb",
+            "rule_parameters": {}
+          }
+        },
+        {
+          "rule_name": "amount_range",
+          "rule_type": "range",
+          "passed": true,
+          "failed_count": 0,
+          "total_count": 5,
+          "success_rate": 1.0,
+          "message": "Rule 'amount_range': 0/5 failed records",
+          "severity": "warning",
+          "execution_time_ms": 0.7174015045166016,
+          "metadata": {
+            "engine": "duckdb",
+            "rule_parameters": {
+              "min_value": 0,
+              "max_value": 10000
+            }
+          }
+        }
+      ]
+    },
+    "completed_at": "2025-07-24T10:11:49.404222"
+  }
+}

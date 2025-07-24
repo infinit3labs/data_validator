@@ -85,16 +85,29 @@ class DataValidator:
         if rules is None:
             rules = self.config.get_enabled_rules(table_name)
 
+        # Check if table is already completed and get cached results
+        if self._state:
+            if self._state.is_completed(table_name):
+                cached_results = self._state.get_cached_results(table_name)
+                if cached_results:
+                    # Reconstruct ValidationSummary from cached results
+                    return self._reconstruct_summary_from_cache(cached_results, table_name)
+            else:
+                # Mark table as started
+                self._state.mark_table_started(table_name)
+
         with self.engine as eng:
-            loaded_data = eng.load_data(data)
-            summary = eng.execute_rules(loaded_data, rules, table_name)
+            loaded_data = eng.load_data_with_retry(data)
+            summary = eng.execute_rules(loaded_data, rules, table_name, self._state)
 
         # Integrate with DQX if enabled
         if self._dqx_enabled:
             summary = self._integrate_with_dqx(summary, table_name)
 
+        # Store results and mark as completed
         if self._state:
-            self._state.mark_completed(table_name)
+            summary_dict = self._summary_to_dict(summary)
+            self._state.store_results(table_name, summary_dict)
 
         return summary
 
@@ -102,7 +115,7 @@ class DataValidator:
         self, data_sources: Dict[str, Any]
     ) -> Dict[str, ValidationSummary]:
         """
-        Validate multiple tables.
+        Validate multiple tables with enhanced resumption capabilities.
 
         Args:
             data_sources: Dictionary mapping table names to data sources
@@ -114,19 +127,40 @@ class DataValidator:
 
         with self.engine as eng:
             for table_name, data_source in data_sources.items():
+                # Check if table is already completed
                 if self._state and self._state.is_completed(table_name):
-                    continue
-                rules = self.config.get_enabled_rules(table_name)
-                loaded_data = eng.load_data(data_source)
-                summary = eng.execute_rules(loaded_data, rules, table_name)
-
-                # Integrate with DQX if enabled
-                if self._dqx_enabled:
-                    summary = self._integrate_with_dqx(summary, table_name)
-
-                results[table_name] = summary
+                    cached_results = self._state.get_cached_results(table_name)
+                    if cached_results:
+                        # Use cached results for completed tables
+                        summary = self._reconstruct_summary_from_cache(cached_results, table_name)
+                        results[table_name] = summary
+                        continue
+                
+                # Mark table as started if using state management
                 if self._state:
-                    self._state.mark_completed(table_name)
+                    self._state.mark_table_started(table_name)
+                
+                try:
+                    rules = self.config.get_enabled_rules(table_name)
+                    loaded_data = eng.load_data_with_retry(data_source)
+                    summary = eng.execute_rules(loaded_data, rules, table_name, self._state)
+
+                    # Integrate with DQX if enabled
+                    if self._dqx_enabled:
+                        summary = self._integrate_with_dqx(summary, table_name)
+
+                    results[table_name] = summary
+                    
+                    # Store results and mark as completed
+                    if self._state:
+                        summary_dict = self._summary_to_dict(summary)
+                        self._state.store_results(table_name, summary_dict)
+                        
+                except Exception as e:
+                    # Log error but continue with other tables
+                    print(f"Error validating table {table_name}: {str(e)}")
+                    # Don't mark as completed on error - allow retry
+                    continue
 
         return results
 
@@ -313,3 +347,73 @@ class DataValidator:
         """Clear persisted pipeline state."""
         if self._state:
             self._state.reset()
+
+    def reset_table_state(self, table_name: str) -> None:
+        """Clear state for a specific table to force re-validation."""
+        if self._state:
+            self._state.reset_table(table_name)
+
+    def reset_rule_state(self, table_name: str, rule_name: str) -> None:
+        """Clear state for a specific rule to force re-execution."""
+        if self._state:
+            self._state.reset_rule(table_name, rule_name)
+
+    def _summary_to_dict(self, summary: ValidationSummary) -> Dict[str, Any]:
+        """Convert ValidationSummary to dictionary for caching."""
+        return {
+            "table_name": summary.table_name,
+            "total_rules": summary.total_rules,
+            "passed_rules": summary.passed_rules,
+            "failed_rules": summary.failed_rules,
+            "warning_rules": summary.warning_rules,
+            "error_rules": summary.error_rules,
+            "overall_success_rate": summary.overall_success_rate,
+            "total_execution_time_ms": summary.total_execution_time_ms,
+            "results": [
+                {
+                    "rule_name": result.rule_name,
+                    "rule_type": result.rule_type,
+                    "passed": result.passed,
+                    "failed_count": result.failed_count,
+                    "total_count": result.total_count,
+                    "success_rate": result.success_rate,
+                    "message": result.message,
+                    "severity": result.severity,
+                    "execution_time_ms": result.execution_time_ms,
+                    "metadata": result.metadata
+                }
+                for result in summary.results
+            ]
+        }
+
+    def _reconstruct_summary_from_cache(self, cached_data: Dict[str, Any], table_name: str) -> ValidationSummary:
+        """Reconstruct ValidationSummary from cached dictionary data."""
+        from .engines import ValidationResult, ValidationSummary
+        
+        results = []
+        for result_data in cached_data.get("results", []):
+            result = ValidationResult(
+                rule_name=result_data.get("rule_name", ""),
+                rule_type=result_data.get("rule_type", ""),
+                passed=result_data.get("passed", False),
+                failed_count=result_data.get("failed_count", 0),
+                total_count=result_data.get("total_count", 0),
+                success_rate=result_data.get("success_rate", 0.0),
+                message=result_data.get("message", ""),
+                severity=result_data.get("severity", "error"),
+                execution_time_ms=result_data.get("execution_time_ms", 0),
+                metadata=result_data.get("metadata", {})
+            )
+            results.append(result)
+
+        return ValidationSummary(
+            table_name=cached_data.get("table_name", table_name),
+            total_rules=cached_data.get("total_rules", 0),
+            passed_rules=cached_data.get("passed_rules", 0),
+            failed_rules=cached_data.get("failed_rules", 0),
+            warning_rules=cached_data.get("warning_rules", 0),
+            error_rules=cached_data.get("error_rules", 0),
+            overall_success_rate=cached_data.get("overall_success_rate", 0.0),
+            total_execution_time_ms=cached_data.get("total_execution_time_ms", 0),
+            results=results
+        )

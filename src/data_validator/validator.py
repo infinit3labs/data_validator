@@ -43,8 +43,8 @@ class DataValidator:
                 str(config), env_prefix=env_prefix, use_widgets=use_widgets
             )
         elif isinstance(config, dict):
-            # Deprecated path: still supported for backwards compatibility
-            self.config = ValidationConfig.from_dict(config)
+            # Use pydantic's model_validate for dict configs
+            self.config = ValidationConfig(**config)
         elif isinstance(config, ValidationConfig):
             self.config = config
         elif isinstance(config, (str, Path)) or config is None:

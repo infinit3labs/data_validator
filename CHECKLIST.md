@@ -13,3 +13,4 @@
 - [x] Add command line interface for local validation
 - [x] In-memory DuckDB engine with SQL rule enforcement
 - [x] Demo script and docs for SQL validation
+- [x] Add architecture overview documentation

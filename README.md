@@ -488,3 +488,4 @@ For issues and questions:
 - GitHub Issues: [Report bugs and request features](https://github.com/infinit3labs/data_validator/issues)
 - Documentation: [Full documentation](https://github.com/infinit3labs/data_validator/wiki)
 - Local Docs: [docs/getting_started.md](docs/getting_started.md)
+- Architecture Overview: [docs/architecture_overview.md](docs/architecture_overview.md)

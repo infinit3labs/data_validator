@@ -123,7 +123,6 @@ class ValidationEngine(ABC):
     def execute_rules(self, data: Any, rules: List[ValidationRule], table_name: str = "unknown", 
                      state_manager=None) -> ValidationSummary:
         """Execute multiple validation rules against the data with state-based resumption."""
-        import time
         
         start_time = time.time()
         results = []

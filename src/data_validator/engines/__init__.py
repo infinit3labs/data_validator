@@ -100,8 +100,8 @@ class ValidationEngine(ABC):
                         try:
                             self.disconnect()
                             self.connect()
-                        except:
-                            pass  # Ignore reconnection errors, let the retry handle it
+                        except Exception as reconnection_error:
+                            logging.warning(f"Reconnection attempt failed: {reconnection_error}")
                     continue
                 else:
                     raise e

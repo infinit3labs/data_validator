@@ -226,9 +226,9 @@ class ValidationEngine(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
             self.disconnect()
-        except:
-            # Ignore errors during cleanup
-            pass
+        except Exception as e:
+            # Log errors during cleanup for debugging purposes
+            logging.warning(f"An error occurred during cleanup: {e}")
 
 
 def create_engine(config: EngineConfig) -> ValidationEngine:
